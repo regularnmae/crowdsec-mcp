@@ -72,6 +72,16 @@ def test_list_decisions_hints_when_the_cap_was_reached(call, fake_lapi) -> None:
     assert payload["truncated"] is True
 
 
+def test_list_decisions_answers_newest_first(call, fake_lapi) -> None:
+    older = {**DECISION, "id": 10, "value": "198.51.100.1"}
+    newer = {**DECISION, "id": 12, "value": "198.51.100.2"}
+    imported = {**DECISION, "value": "198.51.100.3"}
+    imported.pop("id")
+    fake_lapi.rows = [older, newer, imported]
+    payload = _payload(call("list_decisions"))
+    assert [row.get("id") for row in payload["decisions"]] == [12, 10, None]
+
+
 def test_list_decisions_refuses_an_ip_it_cannot_parse(error_call, fake_lapi) -> None:
     text = error_call("list_decisions", ip="not-an-ip")
     assert "ip must be a single IPv4 or IPv6 address" in text

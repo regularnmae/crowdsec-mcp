@@ -264,6 +264,13 @@ def _list_decisions(
         "limit": _clamp(limit),
     }
     rows = client.decisions(**filters)
+    # The LAPI returns decisions oldest-id first. Newest first is the useful
+    # view ("what did it just decide"), and the id is monotonic; a row without
+    # one (an imported decision) sorts last rather than breaking the order.
+    rows.sort(
+        key=lambda row: row["id"] if isinstance(row.get("id"), int) else -1,
+        reverse=True,
+    )
     payload: dict[str, Any] = {
         "count": len(rows),
         "decisions": [_decision(row) for row in rows],
